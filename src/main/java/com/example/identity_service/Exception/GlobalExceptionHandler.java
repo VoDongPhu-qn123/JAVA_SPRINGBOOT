@@ -28,10 +28,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(apiResponse);
     }
    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<List<String>> handlingValidation(MethodArgumentNotValidException exception){
-       List<String> filedErrors = exception.getBindingResult().getFieldErrors().stream().map(FieldError::getDefaultMessage).toList(); // List<FieldError> -> Stream<FieldError> -> Stream<String> -> List<String>
+    ResponseEntity<ApiResponse<User>> handlingValidation(MethodArgumentNotValidException exception){
+       //List<String> filedErrors = exception.getBindingResult().getFieldErrors().stream().map(FieldError::getDefaultMessage).toList(); // List<FieldError> -> Stream<FieldError> -> Stream<String> -> List<String>
        //String message = filedError!=null ? filedError.getDefaultMessage(): "Validation Error";
-       return  ResponseEntity.badRequest().body(filedErrors);
+       var fieldError = exception.getFieldError();
+       String enumKey = fieldError!=null ? fieldError.getDefaultMessage(): "Validation Error";
+       ErrorCode errorCode = ErrorCode.INVALID_KEY;
+       try {
+            errorCode = ErrorCode.valueOf(enumKey); // tìm trong enum có hằng số có tên = giá trị của biến enumKey -> nếu có trả về ErrorCode.USERNAME_INVALID(ví dụ) or nếu ko thì lỗi IllegalArgumentException.
+       }catch (IllegalArgumentException e) {
+           System.out.println("⚠️ Invalid enum key from validation message: " + enumKey);
+       }
+
+       ApiResponse<User> apiResponse = new ApiResponse<>();
+       apiResponse.setCode(errorCode.getCode());
+       apiResponse.setMessage(errorCode.getMessage());
+       return  ResponseEntity.badRequest().body(apiResponse);
    }
 
 }
