@@ -4,45 +4,46 @@ import com.example.identity_service.Exception.AppException;
 import com.example.identity_service.Exception.ErrorCode;
 import com.example.identity_service.dto.request.UserCreationRequest;
 import com.example.identity_service.dto.request.UserUpdateRequest;
+import com.example.identity_service.dto.response.UserResponse;
 import com.example.identity_service.entity.User;
 import com.example.identity_service.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.identity_service.mapper.UserMapper;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor // sẽ generate constructor có tham số cho những field final
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserService {
-    @Autowired
-    private UserRepository userRepository;
-    public User createUser(UserCreationRequest request) {
-        User user = new User();
+
+   UserRepository userRepository;
+   UserMapper userMapper;
+    public UserResponse createUser(UserCreationRequest request) {
         if(userRepository.existsByUsername(request.getUsername())) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
-        user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setDayOfBirth(request.getDayOfBirth());
-        return userRepository.save(user);
+
+        User user = userMapper.toUser(request); //(map) dữ liệu từ DTO request sang Entity User.
+
+        return userMapper.toUserResponse(userRepository.save(user));
     }
     public List<User> getUsers() {
         return userRepository.findAll();
     }
-    public User getUser(String id) {
-        return  userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+    public UserResponse getUser(String id) {
+        return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND))) ;
     }
-    public  User updateUser(String id, UserUpdateRequest request) {
-        User user = getUser(id);
-        user.setPassword(request.getPassword());
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setDayOfBirth(request.getDayOfBirth());
-        return  userRepository.save(user);
+    public  UserResponse updateUser(String id, UserUpdateRequest request) {
+        User user = userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
+        userMapper.updateUser(user, request);
+        return  userMapper.toUserResponse(userRepository.save(user));
     }
     public  User updatePathchUser(String id, UserUpdateRequest request) {
-        User user = getUser(id);
+        User user = userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
         if(request.getPassword() != null) {
             user.setPassword(request.getPassword());
         }
@@ -59,7 +60,7 @@ public class UserService {
         return  userRepository.save(user);
     }
     public void deleteUser(String id) {
-        User user = getUser(id);
+        User user = userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
         userRepository.deleteById(id);
     }
 }

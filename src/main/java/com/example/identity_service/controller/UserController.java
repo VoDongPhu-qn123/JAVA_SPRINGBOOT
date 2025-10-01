@@ -3,22 +3,27 @@ package com.example.identity_service.controller;
 import com.example.identity_service.dto.request.ApiResponse;
 import com.example.identity_service.dto.request.UserCreationRequest;
 import com.example.identity_service.dto.request.UserUpdateRequest;
+import com.example.identity_service.dto.response.UserResponse;
 import com.example.identity_service.entity.User;
 import com.example.identity_service.service.UserService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RequestMapping("/users")
 @RestController
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class UserController {
-    @Autowired
-    private UserService userService;
+
+    UserService userService;
     @PostMapping
-    ApiResponse<User> createUser(@Valid @RequestBody UserCreationRequest request) {
-        ApiResponse<User> apiResponse = new ApiResponse<>();
+    ApiResponse<UserResponse> createUser(@Valid @RequestBody UserCreationRequest request) {
+        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
         apiResponse.setResult(userService.createUser((request)));
         apiResponse.setCode(200);
         return apiResponse;
@@ -28,15 +33,18 @@ public class UserController {
         return  userService.getUsers();
     }
     @GetMapping("/{userId}")
-    User getUser(@PathVariable("userId") String userId) {
+    UserResponse getUser(@PathVariable("userId") String userId) {
         return  userService.getUser(userId);
     }
     @PutMapping("/{userId}")
-    User updateUser(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
-        return userService.updateUser(userId,request);
+    ApiResponse<UserResponse> updateUser( @PathVariable String userId,@Valid @RequestBody UserUpdateRequest request) {
+        ApiResponse<UserResponse> apiResponse = new ApiResponse<>();
+        apiResponse.setResult(userService.updateUser(userId,request));
+        apiResponse.setCode((200));
+        return apiResponse;
     }
     @PatchMapping("/{userId}")
-    User updatePatchUser(@PathVariable String userId, @RequestBody UserUpdateRequest request) {
+    User updatePatchUser( @PathVariable String userId,@Valid @RequestBody UserUpdateRequest request) {
         return userService.updatePathchUser(userId,request);
     }
     @DeleteMapping("/{userId}")
