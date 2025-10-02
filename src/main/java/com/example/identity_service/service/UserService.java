@@ -11,6 +11,8 @@ import com.example.identity_service.mapper.UserMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,7 +30,8 @@ public class UserService {
         }
 
         User user = userMapper.toUser(request); //(map) dữ liệu từ DTO request sang Entity User.
-
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         return userMapper.toUserResponse(userRepository.save(user));
     }
     public List<User> getUsers() {
