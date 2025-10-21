@@ -10,10 +10,13 @@ import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RequestMapping("/users")
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +33,11 @@ public class UserController {
     }
     @GetMapping
     List<User> getUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication(); // Lấy thông tin người dùng đang đăng nhập (SecurityContextHolder là nơi Spring Security lưu thông tin người dùng đang đăng nhập, getContext() → lấy ra ngữ cảnh bảo mật hiện tại, getAuthentication() → lấy ra đối tượng Authentication)
+        log.info("Username: {}", authentication.getName());
+        authentication.getAuthorities().forEach(
+                grantedAuthority -> log.info("Role: {}", grantedAuthority.getAuthority()) // grantedAuthority là một quyền trong danh sách quyền
+        );
         return  userService.getUsers();
     }
     @GetMapping("/{userId}")

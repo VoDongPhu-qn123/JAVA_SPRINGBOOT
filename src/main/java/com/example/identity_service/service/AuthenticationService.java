@@ -22,11 +22,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.StringJoiner;
 
 @Slf4j
 @Service
@@ -44,7 +46,7 @@ public class AuthenticationService {
         if(!authenticated) {
             throw  new AppException(ErrorCode.UNAUTHENTICATED);
         }
-        var token = generateToken(request.getUsername());
+        var token = generateToken(user);
         return AuthenticationResponse.builder()
                 .isAuthenticated(true)
                 .token(token)
@@ -60,13 +62,14 @@ public class AuthenticationService {
                 .valid(verified && expirationTime.after(new Date()))
                 .build();
     }
-    private String generateToken(String username) {
+    private String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512); // Tạo header trong JWT
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
-                .subject(username) // Chủ sở hữu token
+                .subject(user.getUsername()) // Chủ sở hữu token
                 .issuer("devteria.com") // Người phát hành token
                 .issueTime(new Date()) // Thời gian phát hành token
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli())) //Thời gian hết hạn của token
+                .claim("scope",buildScope(user))
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());// Tạo payload trong JWT
 
@@ -78,6 +81,13 @@ public class AuthenticationService {
             log.error("Cannot create token" ,e);
             throw new RuntimeException(e);
         }
+    }
+    private  String buildScope(User user) {
+        StringJoiner stringJoiner = new StringJoiner(" "); // tạo ra một đói tượng stringJoiner là chuỗi với kí tự phân cách là " "
+        if(!CollectionUtils.isEmpty(user.getRoles())) {
+            user.getRoles().forEach(stringJoiner::add); //duyệt qua từng phần tử trong danh sách roles, và gọi stringJoiner.add(role) cho từng cái
+        } // nếu roles ko rỗng
+        return stringJoiner.toString(); // stringJoiner chỉ là một object và cần phải chuyển sang string
     }
 
 }
