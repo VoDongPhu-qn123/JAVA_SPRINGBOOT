@@ -40,6 +40,10 @@ public class UserController {
         );
         return  userService.getUsers();
     }
+    @GetMapping("/myInfo")
+    ApiResponse<UserResponse> getMyInfo() {
+        return ApiResponse.<UserResponse>builder().result(userService.getMyInfo()).build();
+    }
     @GetMapping("/{userId}")
     UserResponse getUser(@PathVariable("userId") String userId) {
         return  userService.getUser(userId);

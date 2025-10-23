@@ -12,6 +12,10 @@ import com.example.identity_service.mapper.UserMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +26,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor // sẽ generate constructor có tham số cho những field final
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class UserService {
 
    UserRepository userRepository;
@@ -40,11 +45,21 @@ public class UserService {
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
+    @PreAuthorize("hasRole('ADMIN')") // Kiểm tra quyền truy cập trước khi chạy method này
     public List<User> getUsers() {
+        log.info("In method get Users");
         return userRepository.findAll();
     }
+    @PostAuthorize("returnObject.username == authentication.name") // Kiểm tra quyền truy cập sau khi  chạy method này, nếu thỏa mãn thì return về giá trị, ko thì báo lỗi
     public UserResponse getUser(String id) {
+        log.info("In method get User by Id");
         return userMapper.toUserResponse(userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND))) ;
+    }
+    public UserResponse getMyInfo() {
+        var context = SecurityContextHolder.getContext();
+        String name = context.getAuthentication().getName();
+        User user = userRepository.findByUsername(name).orElseThrow(()-> new AppException((ErrorCode.USER_NOT_FOUND)));
+        return userMapper.toUserResponse((user));
     }
     public  UserResponse updateUser(String id, UserUpdateRequest request) {
         User user = userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
