@@ -32,7 +32,7 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests(request -> request.requestMatchers(HttpMethod.POST,PUBLIC_ENDPOINTS).permitAll()
                 //.requestMatchers(HttpMethod.GET,"/users").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()); // cho phép mọi người gửi POST đến /users mà không cần đăng nhập, còn mọi request khác thì phải xác thực.
-        httpSecurity.oauth2ResourceServer((oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()).jwtAuthenticationConverter(jwtAuthenticationConverter()))));
+        httpSecurity.oauth2ResourceServer((oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder()).jwtAuthenticationConverter(jwtAuthenticationConverter())).authenticationEntryPoint(new JwtAuthenticationEntryPoint())));
         httpSecurity.csrf(AbstractHttpConfigurer::disable); //tắt cơ chế bảo vệ CSRF (Cross-Site Request Forgery) trong Spring Security
         return httpSecurity.build();
     }
