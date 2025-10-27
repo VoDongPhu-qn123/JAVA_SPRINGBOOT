@@ -5,8 +5,9 @@ import com.example.identity_service.Exception.ErrorCode;
 import com.example.identity_service.dto.request.UserCreationRequest;
 import com.example.identity_service.dto.request.UserUpdateRequest;
 import com.example.identity_service.dto.response.UserResponse;
+import com.example.identity_service.entity.Role;
 import com.example.identity_service.entity.User;
-import com.example.identity_service.enums.Role;
+import com.example.identity_service.repository.RoleRepository;
 import com.example.identity_service.repository.UserRepository;
 import com.example.identity_service.mapper.UserMapper;
 import lombok.AccessLevel;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor // sẽ generate constructor có tham số cho những field final
@@ -30,6 +32,7 @@ import java.util.List;
 public class UserService {
 
    UserRepository userRepository;
+   RoleRepository roleRepository;
    UserMapper userMapper;
    PasswordEncoder passwordEncoder;
     public UserResponse createUser(UserCreationRequest request) {
@@ -39,12 +42,13 @@ public class UserService {
 
         User user = userMapper.toUser(request); //(map) dữ liệu từ DTO request sang Entity User.
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        HashSet<String> roles = new HashSet<>();  //Tạo một tập hợp rỗng (HashSet) chứa các phần tử kiểu String, đặt tên là roles.
-        roles.add(Role.USER.name()); // Role.USER.name() trả về tên của enum object kiểu String
+        Set<Role> roles = new HashSet<>();  //Tạo một tập hợp rỗng (HashSet) chứa các phần tử kiểu Role entity, đặt tên là roles.
+        roles.add(roleRepository.findById("USER").get()); // Thêm bản ghi có name là USER vào roles
         user.setRoles(roles);
 
         return userMapper.toUserResponse(userRepository.save(user));
     }
+    //@PreAuthorize("hasAuthority('create_DATA')")
     @PreAuthorize("hasRole('ADMIN')") // Kiểm tra quyền truy cập trước khi chạy method này
     public List<User> getUsers() {
         log.info("In method get Users");
@@ -64,6 +68,9 @@ public class UserService {
     public  UserResponse updateUser(String id, UserUpdateRequest request) {
         User user = userRepository.findById(id).orElseThrow(()->new AppException(ErrorCode.USER_NOT_FOUND));
         userMapper.updateUser(user, request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        var roles = roleRepository.findAllById(request.getRoles());
+        user.setRoles(new HashSet<>(roles));
         return  userMapper.toUserResponse(userRepository.save(user));
     }
     public  User updatePathchUser(String id, UserUpdateRequest request) {

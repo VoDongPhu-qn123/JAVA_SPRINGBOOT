@@ -14,5 +14,6 @@ public interface UserMapper {
     //@Mapping(target = "lastName", ignore = true) // bỏ đi lastName trong dto UserResponse khi map từ Entity User sang
     @Mapping(source = "firstName", target = "lastName") // map cái firstName của Entity User sang lastName của dto UserResponse
     UserResponse toUserResponse(User user);
+    @Mapping(target = "roles", ignore = true)
     void updateUser(@MappingTarget User user, UserUpdateRequest userUpdateRequest);
 }

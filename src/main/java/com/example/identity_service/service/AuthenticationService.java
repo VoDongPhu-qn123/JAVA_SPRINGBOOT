@@ -85,7 +85,12 @@ public class AuthenticationService {
     private  String buildScope(User user) {
         StringJoiner stringJoiner = new StringJoiner(" "); // tạo ra một đói tượng stringJoiner là chuỗi với kí tự phân cách là " "
         if(!CollectionUtils.isEmpty(user.getRoles())) {
-            user.getRoles().forEach(stringJoiner::add); //duyệt qua từng phần tử trong danh sách roles, và gọi stringJoiner.add(role) cho từng cái
+            user.getRoles().forEach(role -> {
+                stringJoiner.add("ROLE_" + role.getName());
+                if(!CollectionUtils.isEmpty(role.getPermissions())) {
+                    role.getPermissions().forEach(permission -> stringJoiner.add(permission.getName()));
+                }
+            }); //duyệt qua từng phần tử trong danh sách roles, và gọi stringJoiner.add(role) cho từng cái
         } // nếu roles ko rỗng
         return stringJoiner.toString(); // stringJoiner chỉ là một object và cần phải chuyển sang string
     }

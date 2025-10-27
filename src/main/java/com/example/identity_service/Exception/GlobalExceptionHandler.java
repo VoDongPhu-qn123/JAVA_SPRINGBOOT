@@ -1,15 +1,12 @@
 package com.example.identity_service.Exception;
 
-import com.example.identity_service.dto.request.ApiResponse;
+import com.example.identity_service.dto.response.ApiResponse;
 import com.example.identity_service.entity.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
-import java.util.List;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {

@@ -1,6 +1,6 @@
 package com.example.identity_service.controller;
 
-import com.example.identity_service.dto.request.ApiResponse;
+import com.example.identity_service.dto.response.ApiResponse;
 import com.example.identity_service.dto.request.UserCreationRequest;
 import com.example.identity_service.dto.request.UserUpdateRequest;
 import com.example.identity_service.dto.response.UserResponse;
@@ -34,7 +34,6 @@ public class UserController {
     @GetMapping
     List<User> getUsers() {
         var authentication = SecurityContextHolder.getContext().getAuthentication(); // Lấy thông tin người dùng đang đăng nhập (SecurityContextHolder là nơi Spring Security lưu thông tin người dùng đang đăng nhập, getContext() → lấy ra ngữ cảnh bảo mật hiện tại, getAuthentication() → lấy ra đối tượng Authentication)
-        log.info("Username: {}", authentication.getName());
         authentication.getAuthorities().forEach(
                 grantedAuthority -> log.info("Role: {}", grantedAuthority.getAuthority()) // grantedAuthority là một quyền trong danh sách quyền
         );

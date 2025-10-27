@@ -1,17 +1,18 @@
 package com.example.identity_service.dto.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.example.identity_service.entity.Permission;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
+import java.util.Set;
+
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ApiResponse <T> {
-    int code;
-    String message;
-    T result;
+public class RoleRequest {
+    String name;
+    String description;
+    Set<String> permissions;
 }
