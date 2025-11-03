@@ -10,11 +10,12 @@ public enum ErrorCode {
     INVALID_KEY(1000,"Invalid enumKey", HttpStatus.BAD_REQUEST),
     USER_NOT_FOUND (1002,"User not found", HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999,"uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR), // lỗi 500
-    INVALID_USERNAME(1003,"Username must be at least 5 characters", HttpStatus.BAD_REQUEST),
-    INVALID_PASSWORD(1004,"Password must be at least 8 characters", HttpStatus.BAD_REQUEST),
+    INVALID_USERNAME(1003,"Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
+    INVALID_PASSWORD(1004,"Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1005, "User not existed", HttpStatus.NOT_FOUND), // lỗi 404
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED), // lỗi 401
-    UNAUTHORIZED(1007,"You do not have permission", HttpStatus.FORBIDDEN) // lỗi 403
+    UNAUTHORIZED(1007,"You do not have permission", HttpStatus.FORBIDDEN), // lỗi 403
+    INVALID_DOB(1008,"Your age must be at least {min}", HttpStatus.BAD_REQUEST)
     ;
     private final int  code;
     private  final String message;
