@@ -4,9 +4,13 @@ import com.example.identity_service.Exception.AppException;
 import com.example.identity_service.Exception.ErrorCode;
 import com.example.identity_service.dto.request.AuthenticationRequest;
 import com.example.identity_service.dto.request.IntrospectRequest;
+import com.example.identity_service.dto.request.LogoutRequest;
+import com.example.identity_service.dto.response.ApiResponse;
 import com.example.identity_service.dto.response.AuthenticationResponse;
 import com.example.identity_service.dto.response.IntrospectResponse;
+import com.example.identity_service.entity.InvalidatedToken;
 import com.example.identity_service.entity.User;
+import com.example.identity_service.repository.InvalidatedTokenRepository;
 import com.example.identity_service.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -29,6 +33,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -36,6 +41,7 @@ import java.util.StringJoiner;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
     UserRepository userRepository;
+    InvalidatedTokenRepository invalidatedTokenRepository;
     @NonFinal
     @Value("${jwt.signerKey}") // đọc một biến từ file yamal
      protected String SIGNER_KEY;
@@ -54,13 +60,36 @@ public class AuthenticationService {
     }
     public IntrospectResponse Introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
+        boolean isValid = true;
+        try {
+            verifyToken(token);
+        } catch(AppException e) {
+            isValid = false;
+        }
+        return IntrospectResponse.builder().valid(isValid).build();
+
+
+    }
+    public void Logout(LogoutRequest request) throws  JOSEException, ParseException {
+        var signToken = verifyToken(request.getToken());
+        String jit = signToken.getJWTClaimsSet().getJWTID();
+        Date expirationTime = signToken.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken = InvalidatedToken.builder().id(jit).expiryTime(expirationTime).build();
+        invalidatedTokenRepository.save(invalidatedToken);
+    }
+    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
         JWSVerifier jwsVerifier = new MACVerifier((SIGNER_KEY.getBytes())); //Tạo ra một đối tượng kiểm tra chữ ký JWT (verifier)
         SignedJWT signedJWT = SignedJWT.parse(token); // Nó giải mã token JWT dạng chuỗi -> thành đối tượng SignedJWT có thể truy cập từng phần (header, payload, signature)
         Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime(); // Lấy thời gian hết hạn của token
+
         var verified = signedJWT.verify(jwsVerifier);
-        return  IntrospectResponse.builder()
-                .valid(verified && expirationTime.after(new Date()))
-                .build();
+        if(!verified && expirationTime.after(new Date())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        if(invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+            throw  new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+        return signedJWT;
     }
     private String generateToken(User user) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512); // Tạo header trong JWT
@@ -69,6 +98,7 @@ public class AuthenticationService {
                 .issuer("devteria.com") // Người phát hành token
                 .issueTime(new Date()) // Thời gian phát hành token
                 .expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli())) //Thời gian hết hạn của token
+                .jwtID(UUID.randomUUID().toString()) // tạo ra mã ngẫu nhiên 128bit và đảm bảo gần như không trùng lặp
                 .claim("scope",buildScope(user))
                 .build();
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());// Tạo payload trong JWT
